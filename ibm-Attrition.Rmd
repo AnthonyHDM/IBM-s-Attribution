@@ -1,0 +1,260 @@
+---
+title: "IBM's Attribution"
+author: "Anthony"
+date: "2017/12/25"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# IBM's attrition
+##探索数据
+### 插入数据
+```{r warning=FALSE}
+setwd('E:/RCode/')
+ibm<-read.csv('IBM.csv')
+str(ibm)
+```
+
+###加载需要的包
+```{r warning=FALSE,results='hide'}
+#install.packages('grid')
+#install.packages('gridExtra')
+#install.packages('ggplot2')
+library(grid)
+library(gridExtra)
+library(ggplot2)
+```
+
+###探索Attrition和Gender、Age之间的关系
+```{r warning=FALSE}
+ggplot(ibm, aes(x= Gender, y=Age, group = Gender, fill = Gender)) + 
+  geom_boxplot(alpha=0.7) + 
+  theme(legend.position="none") + 
+  facet_wrap(~ Attrition) + 
+  ggtitle("Attrition") + 
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+```
+
+* 从图中可以看出离职情况和年龄是有一定关系的，(1)离职的人年龄普遍较小，这很符合现实，刚开始就业的人群都会在不断更换工作中找到最适合自己的职业，直到找到了就不再更换职业；(2)少部分离职的人年龄极大，本文推测是因为推出导致的离职。
+* 从图中也可以看出离职情况和性别关系是不大的。
+
+###探索Attrition和WorkLifeBalance、DistanceFromHome之间的关系
+```{r warning=FALSE}
+ggplot(ibm,aes(WorkLifeBalance,DistanceFromHome,color=Attrition))+
+  geom_point(position = 'jitter')+ 
+  scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+```
+
+* 从公司到家里距离的以及生活幸福的平衡情况两个维度看，所有离职的数据点基本上是均匀分布的，所以距离和平衡度对离职情况并不产生重要影响
+* 图中也反映了一个真实情况，家里距离公司近的员工人数较多
+
+###探索Attrition与Education、EducationField之间的关系
+```{r warning=FALSE}
+levels(ibm$EducationField) <- c("HR", "LS", "MRK", "MED", "Oth", "TD")
+p5 <- ggplot(ibm, aes(x = Education, fill = Attrition)) + 
+  geom_histogram(stat="count")+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+p6 <- ggplot(ibm, aes(x = EducationField, fill = Attrition)) + 
+  geom_histogram(stat="count")+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+grid.arrange(p5, p6, ncol = 1, nrow = 2)
+```
+
+* 从图中可以看到，教育程度和离职情况有一定关系，离职率随着教育程度的不断增加先呈增加趋势再降低
+* 从图中也可以看到，教育研究领域中Life Sciences的离职率较高，HR和其他领域的离职率较低
+
+###探索Attrition与JobSatisfaction、RelationshipSatisfaction、EnvironmentSatisfaction之间的关系
+```{r warning=FALSE}
+s1 <- ggplot(ibm, aes(x = JobSatisfaction, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+s2 <- ggplot(ibm, aes(x = RelationshipSatisfaction, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+levels(ibm$JobRole) <- c("HC", "HR", "LT", "Man", "MD", "RD", "RS", "SE", "SR")
+s3 <- ggplot(ibm, aes(x = EnvironmentSatisfaction, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+grid.arrange(s1, s2, s3, ncol = 3, nrow = 1)
+```
+
+* 从图中可以看出个人对公司内部各方面的满意度并不直接导致离职，离职率不随着满意度上升而降低，因此可以说明人们对IBM公司的满意度高低与是否离职无关
+
+###探索Attrition与JobInvolvement、JobLevel、JobRole的关系
+```{r warning=FALSE}
+w1 <- ggplot(ibm, aes(x = JobInvolvement, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+w2 <- ggplot(ibm, aes(x = JobLevel, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+levels(ibm$JobRole) <- c("HC", "HR", "LT", "Man", "MD", "RD", "RS", "SE", "SR")
+w3 <- ggplot(ibm, aes(x = JobRole, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+grid.arrange(w1, w2, w3, ncol = 1, nrow = 3)
+```
+
+* 工作的参与度情况与离职率也没有相关关系
+* 工作的层级越高离职数量越少，联系实际，导致这个的原因是（1）工作层架高的员工基数本身就小，所以离职人数相对来说也会较少（2）人们在一个公司工作很久已经升上管理层，那么换工作的想法会比较小，相反，底层员工则会不断寻找自己最适合的工作而不断的换岗位。
+* 从图中可以看到，Sales Executive，Sales Representative，Laboratory Technician离职率较高，这些工作相对来说属于低层级的工作，而Manufacturing Director，Manager，Research Director离职率较低，这些部门主管、经理则是在公司待得比较久的，也和刚才分析的工作层级和离职率的关系相符合。
+
+###探索Attrition与BusinessTravel、Department、OverTime、TrainingTimesLastYear之间的关系
+```{r warning=FALSE}
+levels(ibm$BusinessTravel) <- c("R", "F", "N")
+levels(ibm$Department) <- c("S", "RD", "HR")
+a1 <- ggplot(ibm, aes(x = BusinessTravel, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+a2 <- ggplot(ibm, aes(x = Department, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))+coord_flip()
+a3 <- ggplot(ibm, aes(x = OverTime, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+a4 <- ggplot(ibm, aes(x = TrainingTimesLastYear, fill = Attrition)) + 
+  geom_bar()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+grid.arrange(a1, a2, a3, a4, ncol = 2, nrow = 2)
+```
+
+* 左上图中，出差次数越少，离职率越高
+* 右上图中，RD部门离职人数较多，但是RD部门的总人数较多，所以也不能说明情况
+* 左下图中，是否加班与离职情况有紧密关系，明显加班的人离职率较高
+* 右下图中，去年在公司受培训的次数与离职率也没有明显关系
+
+###探索Attrition与PerformanceRating、StockOptionLevel、PercentSalaryHike之间的关系
+```{r warning=FALSE}
+ggplot(ibm,aes(PerformanceRating,StockOptionLevel,color=PercentSalaryHike))+
+  geom_point(position = 'jitter')+
+  facet_wrap(~Attrition)+ggtitle("Attrition") 
+```
+
+* 从图中可以看出，离职率随StockOptionLevel增长而降低，随PerformanceRating越好而降低
+
+###探索MonthlyIncome、HourlyRate、DailyRate、MonthlyRate之间的关系
+```{r warning=FALSE}
+g1<-ggplot(ibm, aes(x  = MonthlyIncome, fill = Attrition,
+    alpha = .7)) +geom_density()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+g2<-ggplot(ibm, aes(x  = HourlyRate, fill = Attrition,
+    alpha = .7)) +geom_density()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+g3<-ggplot(ibm, aes(x  = DailyRate, fill = Attrition,
+    alpha = .7)) +geom_density()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+g4<-ggplot(ibm, aes(x  = MonthlyRate, fill = Attrition,
+    alpha = .7)) +geom_density()+scale_fill_manual(values = c("#7EC0EE","#EEA2AD"))
+grid.arrange(g1, g2, g3, g4, ncol = 2, nrow = 2)
+```
+
+* 从图中可以看出，大部分离开的人月收入和日率相对较低，小时费率和月利率则和离职率没有什么显而易见的关系。
+
+##RandomForest
+###加载需要的包
+```{r results='hide',warning=FALSE}
+#install.packages('randomForest')
+#install.packages('party')
+#install.packages('rpart.plot')
+#install.packages('rattle')
+#install.packages('rpart')
+library(randomForest)
+library(party)
+library(rpart.plot)
+library(rattle)
+library(rpart)
+```
+
+###将样本分为80%训练数据，20%测试数据
+
+```{r warning=FALSE}
+set.seed(12345)
+ibm<-ibm[c(-9,-10,-22,-27)]
+ins<-sample(2,nrow(ibm),replace = TRUE,prob = c(0.8,0.2))
+trainData<-ibm[ins==1,]
+testData<-ibm[ins==2,]
+```
+
+###建立随机森林模型
+
+```{r warning=FALSE}
+ibm.rf1<-randomForest(Attrition~.,trainData,ntree=500,nPerm=10,mtry=30,proximity=TRUE,importance=TRUE)
+print(ibm.rf1)
+varImpPlot(ibm.rf1,main='Ranking variable importance that associated with nest site selection of the ibm by Random Forest1')
+```
+
+###画出决策树
+
+```{r warning=FALSE}
+dtree1 <- rpart(Attrition ~., data = trainData)
+fancyRpartPlot(dtree1,cex=0.7)
+print(dtree1)
+```
+
+###在测试集上测试训练集上建立的随机森林
+```{r warning=FALSE}
+ibm.pre1<-predict(ibm.rf1,testData)
+prop.table(table(predictd=ibm.pre1, observed=ibm[ins==2,"Attrition"], 
+                 dnn = c( "Predicted","Actual")),1)
+```
+
+###优化决策模型
+```{r warning=FALSE}
+ibm.rf2<-randomForest(ibm[,c('Age','BusinessTravel','EducationField','JobInvolvement',
+      'JobLevel','JobRole','JobSatisfaction','MonthlyIncome','NumCompaniesWorked',
+      'OverTime','StockOptionLevel','TotalWorkingYears','YearsAtCompany')],
+                      ibm[,'Attrition'],importance = TRUE,ntree=500)
+print(ibm.rf2)
+varImpPlot(ibm.rf2,main='Ranking variable importance that associated with nest site selection of the ibm by Random Forest2')
+
+```
+
+```{r warning=FALSE}
+dtree2 <- rpart(Attrition ~Age+BusinessTravel+EducationField+JobInvolvement+JobLevel+
+                 JobRole+JobSatisfaction+MonthlyIncome+NumCompaniesWorked+OverTime+
+                 StockOptionLevel+TotalWorkingYears+YearsAtCompany, data = trainData)
+fancyRpartPlot(dtree2,cex=0.7)
+print(dtree2)
+```
+
+##Gradient Boosting Machines 
+###加载需要的包
+
+```{r results='hide',warning=FALSE}
+#install.packages('caret')
+#install.packages('gbm')
+#install.packages('ROCR')
+#install.packages('pROC')
+library(ROCR)
+library(pROC)
+library(gbm)
+library(caret)
+```
+
+### 将响应变量转为0-1格式
+
+```{r warning=FALSE}
+data <- ibm[c(-9,-10,-22,-27)]#去掉数值相同，对结果没影响的变量
+data$Attrition <- as.numeric(data$Attrition)
+data <- transform(data,Attrition=Attrition-1)
+
+```
+
+##建立模型并预测，求出auc值
+
+```{r warning=FALSE}
+model <- gbm(Attrition~.,data=data,shrinkage=0.01,
+             distribution='bernoulli',cv.folds=5,n.trees=3000,verbose=F)
+gbm.predict = predict(model,data)
+auc(data$Attrition,gbm.predict)
+
+```
+
+* 可以看到模型预测的精确度达到90.06%
+
+###用交叉检验确定最佳迭代次数
+
+```{r warning=FALSE}
+best.iter <- gbm.perf(model,method='cv')
+```
+
+##观察各变量的重要程度
+
+```{r}
+summary(model,best.iter)
+```
+
+
+
